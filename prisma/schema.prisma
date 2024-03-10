@@ -1,0 +1,108 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id              Int @default(autoincrement())
+  unique_id       String @id
+  nama            String
+  password        String
+  email           String
+  id_role         Int
+  id_departemen   String
+  id_prodi        String
+  id_bagian       Int?
+  role            Role @relation(fields: [id_role], references: [id_role])
+  departemen      Departemen @relation(fields: [id_departemen], references: [id_departemen])
+  prodi           Prodi @relation(fields: [id_prodi], references: [id_prodi])
+  log_user        Log_User[]
+  surat           Surat[]
+  log_surat       Log_Surat[]
+  bagian          Bagian? @relation(fields: [id_bagian], references: [id_bagian])
+}
+
+model Role {
+  id_role   Int @id @default(autoincrement())
+  nama_role String
+  user      User[]
+}
+
+model Departemen {
+  id              Int @default(autoincrement())
+  id_departemen   String @id
+  nama_departemen String
+  user            User[]
+  prodi           Prodi[]
+}
+
+model Prodi {
+  id            Int @default(autoincrement())
+  id_prodi      String @id
+  nama_prodi    String
+  id_departemen String
+  departemen    Departemen @relation(fields: [id_departemen], references: [id_departemen])
+  user          User[]
+}
+
+model Bagian {
+  id_bagian   Int @id @default(autoincrement())
+  nama_bagian String
+  user        User[]
+}
+
+model Log_User {
+  id_log_user   Int @default(autoincrement()) @id
+  unique_id     String
+  waktu         DateTime
+  aksi          String
+  user          User @relation(fields: [unique_id], references: [unique_id])
+}
+
+model Surat {
+  id_surat       Int @default(autoincrement()) @id
+  no_surat       String
+  tgl_surat      DateTime
+  perihal        String
+  id_jenis_surat Int
+  id_user        String
+  id_bagian      Int
+  id_status      Int
+  jenis_surat    Master_Jenis_Surat @relation(fields: [id_jenis_surat], references: [id_jenis_surat])
+  user           User @relation(fields: [id_user], references: [unique_id])
+  log_surat      Log_Surat[]
+}
+
+model Master_Jenis_Surat {
+  id_jenis_surat Int @id @default(autoincrement())
+  nama_jenis_surat String
+  surat          Surat[]
+}
+
+model Log_Surat {
+  id_log_surat Int @default(autoincrement()) @id
+  id_surat     Int
+  unique_id    String
+  waktu        DateTime
+  aksi         String
+  id_status    Int
+  surat        Surat @relation(fields: [id_surat], references: [id_surat])
+  status       Master_Status_Surat @relation(fields: [id_status], references: [id_status])
+  user         User @relation(fields: [unique_id], references: [unique_id])
+}
+
+model Master_Status_Surat {
+  id_status      Int @id @default(autoincrement())
+  nama_status    String
+  log_surat      Log_Surat[]
+}
