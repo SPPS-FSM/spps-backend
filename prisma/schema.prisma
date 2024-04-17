@@ -9,56 +9,63 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
+  provider = "mysql"
   url      = env("DATABASE_URL")
 }
 
 model User {
-  id              Int @default(autoincrement())
-  unique_id       String @id
+  id              Int @id @default(autoincrement())
+  unique_id       String @unique
   nama            String
   password        String
-  email           String
+  email           String @unique
   id_role         Int
-  id_departemen   String
-  id_prodi        String
+  id_prodi        String?
   id_bagian       Int?
+  status          String
   role            Role @relation(fields: [id_role], references: [id_role])
-  departemen      Departemen @relation(fields: [id_departemen], references: [id_departemen])
-  prodi           Prodi @relation(fields: [id_prodi], references: [id_prodi])
+  prodi           Prodi? @relation(fields: [id_prodi], references: [id_prodi])
   log_user        Log_User[]
-  surat           Surat[]
-  log_surat       Log_Surat[]
   bagian          Bagian? @relation(fields: [id_bagian], references: [id_bagian])
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
 }
 
 model Role {
   id_role   Int @id @default(autoincrement())
   nama_role String
   user      User[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 model Departemen {
-  id              Int @default(autoincrement())
-  id_departemen   String @id
+  id              Int @id @default(autoincrement())
+  id_departemen   String @unique
   nama_departemen String
-  user            User[]
   prodi           Prodi[]
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
 }
 
 model Prodi {
-  id            Int @default(autoincrement())
-  id_prodi      String @id
+  id            Int @id @default(autoincrement())
+  id_prodi      String @unique
   nama_prodi    String
   id_departemen String
   departemen    Departemen @relation(fields: [id_departemen], references: [id_departemen])
   user          User[]
+  inv_surat     Inv_Surat[]
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
 }
 
 model Bagian {
   id_bagian   Int @id @default(autoincrement())
-  nama_bagian String
-  user        User[]
+  nama_bagian        String
+  user               User[]
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
 }
 
 model Log_User {
@@ -69,40 +76,69 @@ model Log_User {
   user          User @relation(fields: [unique_id], references: [unique_id])
 }
 
-model Surat {
+model Inv_Surat {
   id_surat       Int @default(autoincrement()) @id
   no_surat       String
+  nama_pengaju   String
+  nim_pengaju    String
+  prodi_pengaju  String
   tgl_surat      DateTime
   perihal        String
   id_jenis_surat Int
-  id_user        String
-  id_bagian      Int
-  id_status      Int
+  filename       String
   jenis_surat    Master_Jenis_Surat @relation(fields: [id_jenis_surat], references: [id_jenis_surat])
-  user           User @relation(fields: [id_user], references: [unique_id])
+  prodi          Prodi @relation(fields: [prodi_pengaju], references: [id_prodi])
   log_surat      Log_Surat[]
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
 }
 
 model Master_Jenis_Surat {
-  id_jenis_surat Int @id @default(autoincrement())
-  nama_jenis_surat String
-  surat          Surat[]
+  id_jenis_surat        Int @id @default(autoincrement())
+  nama_jenis_surat      String
+  code                  String
+  id_bagian             Int
+  surat                 Inv_Surat[]
+  Int_JenisSurat_Input  Int_JenisSurat_Input[]
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
 }
 
 model Log_Surat {
   id_log_surat Int @default(autoincrement()) @id
   id_surat     Int
-  unique_id    String
-  waktu        DateTime
-  aksi         String
+  waktu        DateTime @default(now())
+  catatan      String?
   id_status    Int
-  surat        Surat @relation(fields: [id_surat], references: [id_surat])
+  surat        Inv_Surat @relation(fields: [id_surat], references: [id_surat])
   status       Master_Status_Surat @relation(fields: [id_status], references: [id_status])
-  user         User @relation(fields: [unique_id], references: [unique_id])
 }
 
 model Master_Status_Surat {
   id_status      Int @id @default(autoincrement())
+  kode_status    String  
   nama_status    String
+  group_status   String?
+  urutan         Int?
   log_surat      Log_Surat[]
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+}
+
+model Master_Input_Surat {
+  id_input_surat       Int @id @default(autoincrement())
+  nama_input_surat     String
+  code                 String
+  Int_JenisSurat_Input Int_JenisSurat_Input[]
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
+}
+
+model Int_JenisSurat_Input {
+  id             Int @id @default(autoincrement())
+  id_jenis_surat Int
+  id_input_surat Int
+  urutan         Int
+  jenis_surat    Master_Jenis_Surat @relation(fields: [id_jenis_surat], references: [id_jenis_surat])
+  input_surat    Master_Input_Surat @relation(fields: [id_input_surat], references: [id_input_surat])
 }
